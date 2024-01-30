@@ -1,0 +1,162 @@
+*The following code is the VBA code used in the Barcode Scanner Excel file from the same repository.
+
+----------------------------------------------------------------------------------------------
+Module 1 - Scan Barcode Button
+
+Sub ScanBarcodeBTN_Click()
+
+ 'Declare variables
+    Dim BarcodeID  As String
+    Dim AssignedEmployee As String
+    Dim EmployeeID As String
+    Dim EmployeeEmail As String
+    Dim DeviceName As String
+    Dim DeviceLocation As String
+    Dim rowNum As Long
+    Dim cell As Range
+    
+    'Reference worksheet
+    Dim ws As Worksheet
+    Set ws = ThisWorkbook.Sheets("Barcode Data")
+    
+    'Prompt user to scan barcode
+    BarcodeID = InputBox("Please Scan Barcode:")
+    
+    ' Check if the user canceled the input
+    If BarcodeID = "" Then
+        Exit Sub
+    End If
+    
+     ' Find the row number for the device in the spreadsheet
+    On Error Resume Next
+    rowNum = WorksheetFunction.Match(BarcodeID, ws.Range("B:B"), 0)
+    
+     ' Check if the device was found
+    If rowNum = 0 Then
+        MsgBox "IPad not found."
+        Exit Sub
+    End If
+    
+      ' Retrieve data from cells
+    With ws.Rows(rowNum)
+        BarcodeID = .Cells(1, 2).Value ' Column A
+        AssignedEmployee = .Cells(1, 3).Value ' Column C
+        EmployeeID = .Cells(1, 4).Value ' Column D
+        EmployeeEmail = .Cells(1, 5).Value ' Column E
+        DeviceName = .Cells(1, 6).Value ' Column F
+        DeviceLocation = .Cells(1, 7).Value ' Column G
+    End With
+       
+        ' Display the user form with the current data from the spreadsheet
+    DeviceData.Show vbModeless
+    
+        With DeviceData
+        .BarcodeIDTB.Value = ws.Cells(rowNum, 2).Value
+        .AssignedEmployeeTB.Value = ws.Cells(rowNum, 3).Value
+        .EmployeeIDTB.Value = ws.Cells(rowNum, 4).Value
+        .EmployeeEmailTB.Value = ws.Cells(rowNum, 5).Value
+        .DeviceNameTB.Value = ws.Cells(rowNum, 6).Value
+        .DeviceLocationTB.Value = ws.Cells(rowNum, 7).Value
+    End With
+    
+End Sub
+
+
+----------------------------------------------------------------------------------------------
+DeviceData - Userform
+
+Private Sub UpdateBTN_Click()
+    ' Reference worksheet
+    Dim ws As Worksheet
+    Set ws = ThisWorkbook.Sheets("Barcode Data")
+
+    ' Define and retrieve values from the UserForm
+    Dim BarcodeID As String
+    BarcodeID = Me.BarcodeIDTB.Value
+
+    ' Find the row number for the device in the spreadsheet
+    Dim rowNum As Variant
+    On Error Resume Next
+    rowNum = Application.WorksheetFunction.Match(BarcodeID, ws.Range("B:B"), 0)
+    On Error GoTo 0 ' Reset error handling
+
+     ' Check if the device is found
+    If rowNum = 0 Then
+        MsgBox "IPad not found."
+    Else
+        ' Store the original barcode scan
+        Dim originalBarcode As String
+        originalBarcode = ws.Cells(rowNum, 2).Value
+
+        ' Prompt the user to re-scan the barcode to confirm changes
+        Dim newBarcode As String
+        newBarcode = ScanBarcode()
+
+        ' Verify the barcode
+        If newBarcode = originalBarcode Then
+        ' Update the data in the corresponding row
+        ws.Cells(rowNum, 2).Value = Me.BarcodeIDTB.Value
+        ws.Cells(rowNum, 3).Value = Me.AssignedEmployeeTB.Value
+        ws.Cells(rowNum, 4).Value = Me.EmployeeIDTB.Value
+        ws.Cells(rowNum, 5).Value = Me.EmployeeEmailTB.Value
+        ws.Cells(rowNum, 6).Value = Me.DeviceNameTB.Value
+        ws.Cells(rowNum, 7).Value = Me.DeviceLocationTB.Value
+            MsgBox "Update Successful!"
+            Unload Me
+        Else
+            MsgBox "Error: Barcode does not match original scan. Please try again."
+            Exit Sub
+        End If
+    End If
+End Sub
+
+
+Function ScanBarcode() As String
+    ScanBarcode = InputBox("Please Scan Barcode:")
+End Function
+
+
+Private Sub CloseBTN_Click()
+    Unload Me ' This line closes the UserForm
+End Sub
+
+
+----------------------------------------------------------------------------------------------
+Module 2 - Add Device Button
+
+Sub AddDeviceBTN()
+    ' Display the userform
+    UpdateDeviceData.Show vbModeless
+End Sub
+
+
+
+----------------------------------------------------------------------------------------------
+UpdateDeviceData - User Form
+
+Private Sub UpdateBTN_Click()
+    ' Reference worksheet
+    Dim ws As Worksheet
+    Set ws = ThisWorkbook.Sheets("Barcode Data")
+    
+    ' Find the next available row in the spreadsheet
+    Dim nextRow As Long
+    nextRow = ws.Cells(ws.Rows.Count, "A").End(xlUp).Row + 1
+    
+    ' Transfer data to the spreadsheet
+    ws.Cells(nextRow, 1).Value = Me.BarcodeIDTB.Value
+    ws.Cells(nextRow, 2).Value = Me.BarcodeIDTB.Value
+    ws.Cells(nextRow, 3).Value = Me.AssignedEmployeeTB.Value
+    ws.Cells(nextRow, 4).Value = Me.EmployeeIDTB.Value
+    ws.Cells(nextRow, 5).Value = Me.EmployeeEmailTB.Value
+    ws.Cells(nextRow, 6).Value = Me.DeviceNameTB.Value
+    ws.Cells(nextRow, 7).Value = Me.DeviceLocationTB.Value
+    
+    ' Close the userform
+    Unload Me
+End Sub
+
+
+Private Sub CloseBTN_Click()
+    Unload Me ' This line closes the UserForm
+End Sub
